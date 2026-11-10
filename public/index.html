@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">MarTech Hub | Gestão Integrada de Marketing & Operações Multimarcas</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              gold: '#d97706',
+              dark: '#0b1120'
+            },
+            slate: {
+              850: '#141c2e',
+              900: '#0f172a',
+              950: '#020617'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .pulsing-red { animation: pulse-red 2s infinite cubic-bezier(0.4, 0, 0.6, 1); }
+    @keyframes pulse-red { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.02); } }
+    .drawer-backdrop { background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(2px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- TOP BAR: CONTEXTO DA HOLDING ATIVA -->
+  <header class="bg-slate-900/95 backdrop-blur border-b border-slate-800 sticky top-0 z-30 px-4 py-2.5">
+    <div class="max-w-[1750px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Holding Identification -->
+      <div class="flex items-center gap-3">
+        <div id="headerHoldingInitials" class="w-9 h-9 rounded-lg bg-gradient-to-tr from-sky-500 via-indigo-600 to-amber-500 flex items-center justify-center shadow-lg shadow-sky-500/20 font-black text-white text-base">
+          M
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+              <span id="headerHoldingName">Grupo Vértice (Demo)</span>
+              <span id="headerBrandCountBadge" class="text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded">8 Marcas</span>
+            </h1>
+            <span class="text-slate-600">•</span>
+            <span id="workspaceModeBadge" class="text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded">Modo Demonstração</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Gestão de Conteúdo Digital, Mídia Off, Roteiros Estruturados e Controle Rigoroso de SLA</p>
+        </div>
+      </div>
+
+      <!-- Quick Global Filters & BYOD Data Controls -->
+      <div class="flex items-center flex-wrap gap-2 text-xs">
+        
+        <!-- Natureza da Demanda Filter -->
+        <div class="flex items-center bg-slate-800/90 rounded-md border border-slate-700/80 px-2 py-1">
+          <span class="text-slate-400 mr-1.5 text-[11px] font-medium">Natureza:</span>
+          <select id="filterNature" onchange="handleFilterChange()" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer">
+            <option value="ALL">Todas (Digital & Mídia Off)</option>
+            <option value="DIGITAL">📱 Digital / Redes Sociais</option>
+            <option value="OFFLINE">🏢 Mídia Off / Material Físico</option>
+          </select>
+        </div>
+
+        <!-- Brand Selector -->
+        <div class="flex items-center bg-slate-800/90 rounded-md border border-slate-700/80 px-2 py-1">
+          <span class="text-slate-400 mr-1.5 text-[11px] font-medium">Marca:</span>
+          <select id="filterBrand" onchange="handleFilterChange()" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer max-w-[200px] truncate">
+            <option value="ALL">Todas as Marcas</option>
+            <!-- Injected dynamically -->
+          </select>
+        </div>
+
+        <!-- Unit Selector with Operational Regime -->
+        <div class="flex items-center bg-slate-800/90 rounded-md border border-slate-700/80 px-2 py-1">
+          <span class="text-slate-400 mr-1.5 text-[11px] font-medium">Unidade/Praça:</span>
+          <select id="filterUnit" onchange="handleFilterChange()" class="bg-transparent text-white font-medium focus:outline-none cursor-pointer max-w-[210px] truncate">
+            <option value="ALL">Todas as Unidades (Visão Grupo)</option>
+            <!-- Injected dynamically with regimes -->
+          </select>
+        </div>
+
+        <!-- Action Button: Novo Pedido / Ideia -->
+        <button onclick="openNewDemandModal()" class="flex items-center gap-1.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-semibold px-3 py-1.5 rounded-md shadow-md shadow-sky-500/20 transition cursor-pointer text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          + Novo Pedido / Ideia
+        </button>
+
+        <!-- BYOD Local Workspace Controls (Import / Export JSON) -->
+        <input type="file" id="workspaceFileInput" accept=".json,application/json" class="hidden" onchange="handleWorkspaceFileUpload(event)">
+
+        <button onclick="document.getElementById('workspaceFileInput').click()" title="Carregar arquivo de dados privado (.json) apenas neste navegador" class="flex items-center gap-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-semibold px-2.5 py-1.5 rounded-md transition cursor-pointer text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Carregar Meus Dados</span>
+        </button>
+
+        <button onclick="exportWorkspaceJson()" title="Salvar cópia de segurança atualizada (.json) no seu computador" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-semibold px-2.5 py-1.5 rounded-md transition cursor-pointer text-xs">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span>Salvar Backup</span>
+        </button>
+
+        <button onclick="resetData()" title="Limpar dados locais deste navegador e voltar para o modo demonstração" class="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-800/60 hover:bg-slate-700/80 rounded-md border border-slate-700 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="bg-slate-900 border-b border-slate-800 px-4 sticky top-[53px] z-20">
+    <div class="max-w-[1750px] mx-auto flex items-center gap-1 overflow-x-auto py-1.5 no-scrollbar text-xs font-medium">
+      
+      <!-- Central de Pedidos (Inbox) - ABA ESTRATÉGICA -->
+      <button onclick="switchTab('inbox')" id="tab-inbox" class="tab-btn px-3 py-1.5 rounded-md text-white bg-slate-800 flex items-center gap-2 border border-slate-700/50">
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+        <span>Central de Pedidos & Ideias</span>
+        <span id="badgeInboxCount" class="text-[10px] font-bold bg-sky-500/20 text-sky-400 px-1.5 py-0.2 rounded-full border border-sky-500/30">6</span>
+      </button>
+
+      <!-- Dashboard Executivo & SLA -->
+      <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Dashboard Executivo & SLA
+      </button>
+
+      <!-- Calendário Inteligente -->
+      <button onclick="switchTab('calendar')" id="tab-calendar" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Calendário Editorial Inteligente
+      </button>
+
+      <!-- Kanban de Produção (10 Etapas) -->
+      <button onclick="switchTab('kanban')" id="tab-kanban" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+        Kanban de Produção
+      </button>
+
+      <!-- Central de Aprovação (Diretoria) -->
+      <button onclick="switchTab('approval')" id="tab-approval" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Central de Aprovação
+      </button>
+
+      <!-- Matriz Semáforo das Marcas -->
+      <button onclick="switchTab('health')" id="tab-health" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span id="tabHealthLabel">Semáforo das Marcas</span>
+      </button>
+
+      <!-- Minha Rotina (Visão da Equipe) -->
+      <button onclick="switchTab('myroutine')" id="tab-myroutine" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+        Minha Rotina
+      </button>
+
+      <!-- Hierarquia Corporativa -->
+      <button onclick="switchTab('management')" id="tab-management" class="tab-btn px-3 py-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 flex items-center gap-2 border border-transparent">
+        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <span id="tabHierarchyLabel">Hierarquia Corporativa</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 max-w-[1750px] w-full mx-auto p-4 sm:p-6 overflow-y-auto">
+
+    <!-- ========================================================== -->
+    <!-- VIEW 1: CENTRAL DE PEDIDOS & IDEIAS (INBOX DE DEMANDAS)     -->
+    <!-- ========================================================== -->
+    <div id="view-inbox" class="space-y-6">
+      
+      <!-- Top Quick Header & Stats -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Fonte Única da Verdade</span>
+            <span class="text-xs text-slate-400">• Sincronização Automática em Tempo Real (Inbox &harr; Calendário &harr; Kanban)</span>
+          </div>
+          <h2 class="text-lg font-bold text-white mt-1">Central de Pedidos, Ideias & Pautas</h2>
+          <p class="text-xs text-slate-400">Lance demandas sem se preocupar em montar cronogramas manuais: ao preencher a Data Meta, o sistema ordena na linha do tempo e cria o card no Kanban automaticamente.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 text-xs text-center">
+            <span class="text-[10px] text-slate-400 block">Total no Funil</span>
+            <b id="inboxStatTotal" class="text-white text-base font-bold">14</b>
+          </div>
+          <div class="bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 text-xs text-center">
+            <span class="text-[10px] text-emerald-400 block">Concluído no Prazo</span>
+            <b id="inboxStatOnTime" class="text-emerald-400 text-base font-bold">85%</b>
+          </div>
+          <div class="bg-slate-950 px-3 py-2 rounded-lg border border-rose-900/60 text-xs text-center">
+            <span class="text-[10px] text-rose-400 block">Atrasados / Bloqueados</span>
+            <b id="inboxStatDelayed" class="text-rose-400 text-base font-bold">2</b>
+          </div>
+          <button onclick="openNewDemandModal()" class="bg-sky-500 hover:bg-sky-400 text-white font-semibold px-4 py-2 rounded-lg text-xs transition shadow-md shadow-sky-500/20 flex items-center gap-1.5 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            + Novo Lançamento Rápido
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Quick Filters Bar in Inbox -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-xs">
+        <div class="flex items-center gap-2 flex-1 min-w-[280px]">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="inboxSearchInput" oninput="renderInboxTable()" placeholder="Buscar por título, código (ex: CSEN-2026-001), campanha ou responsável..." class="bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-white w-full focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-slate-400">Filtrar SLA:</span>
+          <select id="inboxSlaFilter" onchange="renderInboxTable()" class="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-white">
+            <option value="ALL">Todos os Status de SLA</option>
+            <option value="ON_TIME">✓ Em Dia</option>
+            <option value="OVERDUE_OPEN">🛑 Atrasado (Em aberto)</option>
+            <option value="COMPLETED_ON_TIME">✓ Concluído no Prazo</option>
+            <option value="COMPLETED_LATE">⚠️ Concluído com Atraso</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabela Principal de Pedidos (Inbox Table) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider bg-slate-950/70">
+              <tr>
+                <th class="py-3 px-3">Código / Nat.</th>
+                <th class="py-3 px-3">Marca & Escopo</th>
+                <th class="py-3 px-3">Título da Demanda / Pauta</th>
+                <th class="py-3 px-3">Formato</th>
+                <th class="py-3 px-3">Etapa Atual</th>
+                <th class="py-3 px-3">Dono & De Quem é a Vez</th>
+                <th class="py-3 px-3">Data Meta (Prazo)</th>
+                <th class="py-3 px-3">Status SLA</th>
+                <th class="py-3 px-3 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="inboxTableBody" class="divide-y divide-slate-800 text-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Banco de Ideias / Backlog (Sem Data Meta Definida) -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Banco de Ideias & Pautas Livres (Backlog sem data)</h3>
+          </div>
+          <span class="text-[11px] text-slate-400">Assim que você definir uma data meta, o card entra automaticamente no calendário</span>
+        </div>
+        <div id="backlogListContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Dynamically populated backlog cards -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 2: DASHBOARD EXECUTIVO & ANÁLISE RIGOROSA DE SLA      -->
+    <!-- ========================================================== -->
+    <div id="view-dashboard" class="space-y-6 hidden">
+      
+      <!-- SELETOR RÁPIDO DE REDES NO TOPO DO DASHBOARD -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 shrink-0">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Filtrar Rede / Canal:
+          </span>
+          <div id="dashboardNetworkPills" class="flex items-center gap-1.5 flex-nowrap">
+            <!-- Populated dynamically: Todas, Instagram, TikTok, YouTube, etc. -->
+          </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden lg:block shrink-0">Isole o funil de qualquer canal com 1 clique</span>
+      </div>
+
+      <!-- Blocker Alert Ribbon -->
+      <div id="blockerRibbon" class="bg-rose-950/40 border border-rose-800/60 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="flex h-3 w-3 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+          </span>
+          <div>
+            <h3 class="text-xs sm:text-sm font-semibold text-rose-300 flex items-center gap-2">
+              ALERTA DE GARGALO CRÍTICO: <span id="blockerCountText">1 Demanda Travada no Pipeline</span>
+            </h3>
+            <p class="text-xs text-rose-400/80">Exige destravamento de agenda médica/diretoria ou validação de materiais.</p>
+          </div>
+        </div>
+        <button onclick="switchTab('kanban'); filterOnlyBlocked();" class="text-xs bg-rose-600 hover:bg-rose-500 text-white font-semibold px-3 py-1.5 rounded-lg transition shrink-0">
+          Ver no Kanban
+        </button>
+      </div>
+
+      <!-- KPI SLA Cards (Rigoroso: Concluído no Prazo vs Concluído com Atraso) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Total Planejado -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-400">Total Planejado no Mês</span>
+            <span id="kpiBrandCountBadge" class="text-xs bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 font-semibold">8 Marcas</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiTotalPlanned" class="text-2xl font-bold text-white">6</span>
+            <span class="text-xs text-slate-400">demandas monitoradas</span>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-800/80 pt-2">
+            <span>Digital: <b id="kpiDigitalCount" class="text-sky-300">5</b></span>
+            <span>Mídia Off: <b id="kpiOfflineCount" class="text-amber-300">1</b></span>
+          </div>
+        </div>
+
+        <!-- Concluído no Prazo -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-400">Concluído no Prazo (SLA)</span>
+            <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">Selo Verde</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiOnTimeRate" class="text-2xl font-bold text-emerald-400">100%</span>
+            <span class="text-xs text-slate-400">das entregas finalizadas</span>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center justify-between">
+            <span>Dentro da Data Meta: <b id="kpiOnTimeCount" class="text-white">1</b></span>
+            <span class="text-emerald-400">Sem atrasos</span>
+          </div>
+        </div>
+
+        <!-- Concluído com Atraso -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-400">Concluído com Atraso</span>
+            <span class="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-semibold">Selo Laranja</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiLateRate" class="text-2xl font-bold text-amber-400">1</span>
+            <span class="text-xs text-slate-400">entregas após o prazo</span>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center justify-between">
+            <span>Média de atraso: <b class="text-amber-300">+2.0 dias</b></span>
+            <span class="text-slate-400">Histórico salvo</span>
+          </div>
+        </div>
+
+        <!-- Atrasado (Em aberto) -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm hover:border-slate-700 transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-400">Atrasado (Não Entregue)</span>
+            <span class="text-xs bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded border border-rose-500/40 font-bold pulsing-red">Urgente</span>
+          </div>
+          <div class="mt-2 flex items-baseline gap-2">
+            <span id="kpiOverdueOpenCount" class="text-2xl font-bold text-rose-400">1</span>
+            <span class="text-xs text-slate-400">card passou da meta</span>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 flex items-center justify-between">
+            <span>Gargalo: <b id="kpiOverdueBottleneckLabel" class="text-rose-300">Em Monitoramento</b></span>
+            <span class="text-rose-400 font-semibold">Atenção</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================================== -->
+      <!-- RAIO-X DE ENTREGAS POR MARCA (EM PRODUÇÃO VS. ENTREGUES)   -->
+      <!-- ========================================================== -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Painel Executivo por Marca</span>
+              <span id="xrayBrandCountSub" class="text-xs text-slate-400">• Em Produção vs. Entregues</span>
+            </div>
+            <h2 class="text-base font-bold text-white mt-1">Raio-X de Entregas por Marca & Unidades</h2>
+            <p class="text-xs text-slate-400">Total planejado no mês, divisão por sub-etapas do funil, alertas de travamento/atraso e cumprimento de metas.</p>
+          </div>
+
+          <!-- Controles: Mês/Período + Expandir Todas -->
+          <div class="flex items-center flex-wrap gap-2 text-xs">
+            <div class="flex items-center bg-slate-950 rounded-lg border border-slate-800 px-2.5 py-1">
+              <span class="text-slate-400 mr-2 text-[11px]">Mês / Período:</span>
+              <select id="brandXrayMonthSelect" onchange="handleBrandXrayMonthChange(this.value)" class="bg-transparent text-white font-semibold focus:outline-none cursor-pointer">
+                <option value="2026-11">Novembro 2026 (Mês Atual)</option>
+                <option value="2026-12">Dezembro 2026</option>
+                <option value="ALL">Todo o Histórico</option>
+              </select>
+            </div>
+
+            <button onclick="toggleExpandAllBrandRows()" id="btnToggleExpandAllBrands" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition text-xs font-medium flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <span id="btnToggleExpandText">Expandir Unidades</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabela Visual Moderna com Barras de Progresso Integradas -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider bg-slate-950/70">
+              <tr>
+                <th class="py-3 px-3">Marca</th>
+                <th class="py-3 px-3 text-center">Total Planejado no Mês</th>
+                <th class="py-3 px-3 text-center">A Fazer / Ideia</th>
+                <th class="py-3 px-3 text-center">Em Produção</th>
+                <th class="py-3 px-3 text-center">Travados / Atrasados</th>
+                <th class="py-3 px-3 text-center">Entregues / Publicados</th>
+                <th class="py-3 px-3 text-right min-w-[170px]">% de Conclusão do Mês</th>
+              </tr>
+            </thead>
+            <tbody id="brandXrayTableBody" class="divide-y divide-slate-800/80 text-slate-200">
+              <!-- Dynamically populated with brands and child unit rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONDE OS ATRASOS OCORRERAM (RAIO-X DE CULPABILIDADE POR ETAPA) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              Origem dos Atrasos (Para Não Penalizar o Profissional Errado)
+            </h2>
+            <p class="text-[11px] text-slate-400">Identificação exata do estágio do funil onde cada atraso foi originado (ex: aprovação da diretoria ou gráfica externa).</p>
+          </div>
+          <span class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">Rastreabilidade Total</span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs" id="delayOriginGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Grid 2 Colunas: Raio-X de Gargalos + Saúde das Unidades -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Mapa de Calor dos 10 Estágios -->
+        <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                Raio-X de Gargalos por Etapa Produtiva
+              </h2>
+              <p class="text-[11px] text-slate-400">Volume de cards e tempo médio de permanência em dias</p>
+            </div>
+            <span class="text-[11px] text-slate-400 bg-slate-800 px-2 py-1 rounded">SLA Médio: 2 a 4 dias</span>
+          </div>
+
+          <div class="space-y-2.5" id="dashboardBottleneckList">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Saúde de Cobertura das Unidades -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Saúde de Cobertura das Unidades
+              </h2>
+              <p class="text-[11px] text-slate-400">Verificação de cobertura por praça e regime operacional</p>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto flex-1">
+            <table class="w-full text-left text-xs">
+              <thead class="text-slate-400 border-b border-slate-800 text-[11px]">
+                <tr>
+                  <th class="pb-2 font-medium">Unidade / Praça</th>
+                  <th class="pb-2 font-medium">Regime</th>
+                  <th class="pb-2 font-medium text-center">7 Dias</th>
+                  <th class="pb-2 font-medium text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardUnitCoverageBody" class="divide-y divide-slate-800/60 text-slate-300">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Produtividade da Equipe -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              <span id="teamSectionTitle">Produtividade e Carga da Equipe</span>
+            </h2>
+            <p id="teamSummarySubtitle" class="text-[11px] text-slate-400">Distribuição de demandas ativas por função operacional</p>
+          </div>
+          <span id="teamCountBadge" class="text-xs text-slate-400">8 Profissionais Monitorados</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="teamProductivityGrid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 3: CALENDÁRIO EDITORIAL INTELIGENTE                    -->
+    <!-- ========================================================== -->
+    <div id="view-calendar" class="space-y-4 hidden">
+      
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>Novembro 2026</span>
+            <span class="text-xs font-normal text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">Linha do Tempo Automática</span>
+          </h2>
+          <span class="text-xs text-slate-400 hidden sm:inline">• Organizado automaticamente pela Data Meta de Entrega</span>
+        </div>
+
+        <div class="flex items-center flex-wrap gap-2 text-[11px] text-slate-300">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-sky-500 inline-block"></span> Vídeo / Reels</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-indigo-500 inline-block"></span> Carrossel</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-amber-500 inline-block"></span> 🏢 Mídia Off (Físico)</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span> Entregue no Prazo</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-rose-500 inline-block"></span> Atrasado / Travado</span>
+        </div>
+      </div>
+
+      <!-- SELETOR RÁPIDO DE REDES NO TOPO DO CALENDÁRIO -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 sm:p-3 flex items-center justify-between gap-3 overflow-x-auto no-scrollbar shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 shrink-0">
+            <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            Filtrar Rede:
+          </span>
+          <div id="calendarNetworkPills" class="flex items-center gap-1.5 flex-nowrap">
+            <!-- Populated dynamically: Todas, Instagram, TikTok, YouTube, etc. -->
+          </div>
+        </div>
+        <span class="text-[11px] text-slate-400 hidden lg:block shrink-0">Mini-ícones nos cards: Verde = Publicado, Cinza = Pendente</span>
+      </div>
+
+      <!-- Feriados Locais Ribbon -->
+      <div class="bg-slate-900/60 border border-slate-800/80 rounded-lg p-2.5 text-xs flex flex-wrap items-center justify-between gap-2 text-slate-300">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400 font-bold">Feriados do Calendário:</span>
+          <span id="calendarHolidaysRibbonText" class="text-slate-400">15/Nov (Proclamação da República) • 20/Nov (Consciência Negra)</span>
+        </div>
+        <span class="text-xs text-slate-400">Filtre praças para ver feriados municipais locais</span>
+      </div>
+
+      <!-- Month Grid -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="grid grid-cols-7 border-b border-slate-800 bg-slate-950/60 text-center text-xs font-semibold text-slate-400 py-2.5">
+          <div>Domingo</div>
+          <div>Segunda-feira</div>
+          <div>Terça-feira</div>
+          <div>Quarta-feira</div>
+          <div>Quinta-feira</div>
+          <div>Sexta-feira</div>
+          <div>Sábado</div>
+        </div>
+        <div class="grid grid-cols-7 divide-x divide-y divide-slate-800 min-h-[600px] text-xs" id="calendarDaysGrid"></div>
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 4: KANBAN DE PRODUÇÃO (COM ADAPTAÇÃO MÍDIA OFF)        -->
+    <!-- ========================================================== -->
+    <div id="view-kanban" class="space-y-4 hidden">
+      
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl">
+        <div class="flex items-center gap-3">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+            Pipeline Produtivo Unificado
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">10 Etapas Rastreáveis</span>
+          </h2>
+          <span class="text-xs text-slate-400 hidden sm:inline">Etapas 9 e 10 adaptam dinamicamente para Digital (Agendado/Publicado) ou Mídia Off (Enviado Gráfica/Instalado)</span>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs">
+          <button id="btnFilterBlockedOnly" onclick="toggleFilterBlockedOnly()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+            Mostrar Apenas Travados
+          </button>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400">Clique para abrir o Drawer completo</span>
+        </div>
+      </div>
+
+      <!-- Kanban Columns Container (Horizontal Scroll) -->
+      <div class="flex gap-3 overflow-x-auto pb-4 pt-1" id="kanbanBoard">
+        <!-- Dynamically rendered 10 columns -->
+      </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 5: CENTRAL DE APROVAÇÃO (DIRETORIA)                   -->
+    <!-- ========================================================== -->
+    <div id="view-approval" class="space-y-6 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded font-semibold">Portal do Aprovador Executivo</span>
+              <span id="approvalDirectorsSubtitle" class="text-xs text-slate-400">• Diretoria Executiva</span>
+            </div>
+            <h2 class="text-lg font-bold text-white mt-1">Roteiros, Peças e Artes Aguardando Parecer</h2>
+            <p class="text-xs text-slate-400">Leitura limpa de roteiros em blocos de cena, carrosséis lâmina a lâmina e provas de mídia física.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Logado como:</span>
+            <select id="approverSelector" onchange="renderApprovalView()" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none">
+              <!-- Populated dynamically from state.team -->
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-6" id="approvalQueueContainer">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 6: SEMÁFORO DAS MARCAS                                -->
+    <!-- ========================================================== -->
+    <div id="view-health" class="space-y-6 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <span id="healthMatrixTitle">Matriz Executiva das Marcas</span>
+            </h2>
+            <p class="text-xs text-slate-400">Visão consolidada de metas e regimes operacionais (unidades com Cessão de Marca não geram metas automáticas).</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded border border-emerald-500/20">Saudável: >= 85% meta</span>
+            <span class="px-2 py-1 bg-amber-500/10 text-amber-400 rounded border border-amber-500/20">Atenção: 60% a 84%</span>
+            <span class="px-2 py-1 bg-rose-500/10 text-rose-400 rounded border border-rose-500/20">Crítico: < 60% ou Travado</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 border-b border-slate-800 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="py-3 px-3">Marca / Código</th>
+                <th class="py-3 px-3">Segmento</th>
+                <th class="py-3 px-3 text-center">Unidades / Regime</th>
+                <th class="py-3 px-3 text-center">Meta Mensal</th>
+                <th class="py-3 px-3 text-center">Planejado</th>
+                <th class="py-3 px-3 text-center">Publicado</th>
+                <th class="py-3 px-3 text-center">Status Semáforo</th>
+                <th class="py-3 px-3 text-right">Filtrar</th>
+              </tr>
+            </thead>
+            <tbody id="brandHealthTableBody" class="divide-y divide-slate-800 text-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 7: MINHA ROTINA (VISÃO DA EQUIPE)                     -->
+    <!-- ========================================================== -->
+    <div id="view-myroutine" class="space-y-6 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Minha Rotina: Foco Operacional por Papel
+            </h2>
+            <p class="text-xs text-slate-400">Tarefas ordenadas pela urgência da Data Meta de Entrega (Acompanhamento, Roteiro, Captação, Edição, Publicação).</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Ver tarefas de:</span>
+            <select id="routineMemberSelector" onchange="renderMyRoutineView()" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg px-2.5 py-1.5 focus:outline-none">
+              <!-- Populated dynamically from state.team -->
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6" id="myRoutineColumns">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- VIEW 8: HIERARQUIA CORPORATIVA                             -->
+    <!-- ========================================================== -->
+    <div id="view-management" class="space-y-6 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6">
+        <div class="border-b border-slate-800 pb-4 mb-4 flex items-center justify-between">
+          <div>
+            <h2 id="hierarchyViewTitle" class="text-base font-bold text-white">Hierarquia Corporativa</h2>
+            <p id="hierarchyViewSubtitle" class="text-xs text-slate-400">Holding &rarr; Marcas &rarr; Unidades com Regime Operacional &rarr; Perfis Sociais</p>
+          </div>
+          <span id="hierarchyBrandCountBadge" class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded font-semibold">8 Marcas Ativas</span>
+        </div>
+        <div class="space-y-4" id="hierarchyTreeContainer">
+          <!-- Dynamically populated tree -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================== -->
+  <!-- DRAWER LATERAL AMPLO: EDITOR ESTRUTURADO, MÍDIA OFF & SLA  -->
+  <!-- ========================================================== -->
+  <div id="demandDrawerBackdrop" class="fixed inset-0 drawer-backdrop z-40 hidden transition-opacity" onclick="closeDrawer()"></div>
+  
+  <aside id="demandDrawer" class="fixed right-0 top-0 bottom-0 w-full max-w-3xl bg-slate-900 border-l border-slate-800 z-50 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Top Header Drawer -->
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/90">
+      <div class="flex items-center gap-2">
+        <span id="drawerCode" class="text-xs font-mono font-bold bg-slate-800 text-sky-400 px-2 py-0.5 rounded border border-slate-700">VERT-2026-001</span>
+        <span id="drawerNatureBadge" class="text-[11px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20 px-2 py-0.5 rounded">📱 Digital</span>
+        <span id="drawerScopeBadge" class="text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded">Global</span>
+        <span id="drawerFormatBadge" class="text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">REELS</span>
+        <span id="drawerPublicationStatusPill" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 hidden">⚠️ Parcial (2/3)</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="drawerBlockBtn" onclick="toggleCurrentDrawerBlocker()" class="text-xs px-2.5 py-1 rounded font-medium border transition flex items-center gap-1.5 text-rose-400 border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span id="drawerBlockBtnText">Marcar TRAVADO</span>
+        </button>
+
+        <button onclick="closeDrawer()" class="p-1 text-slate-400 hover:text-white rounded hover:bg-slate-800 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Blocker Banner inside Drawer if blocked -->
+    <div id="drawerBlockerAlert" class="bg-rose-950/80 border-b border-rose-800 p-3 hidden text-xs text-rose-200 flex items-start justify-between gap-2">
+      <div class="flex items-start gap-2">
+        <svg class="w-4 h-4 text-rose-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div>
+          <b class="font-bold text-rose-300">DEMANDA TRAVADA (BLOCKER ATIVO):</b>
+          <div id="drawerBlockerReasonText" class="mt-0.5">Motivo...</div>
+          <div class="text-[11px] text-rose-400/90 mt-1">Quem precisa destravar: <span id="drawerBlockerTargetText" class="font-semibold text-white">...</span></div>
+        </div>
+      </div>
+      <button onclick="unblockCurrentDemand()" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-2.5 py-1 rounded text-[11px] shrink-0">
+        Destravar
+      </button>
+    </div>
+
+    <!-- PAINEL DOS 6 RESPONSÁVEIS FIXOS (RASTREABILIDADE TOTAL) -->
+    <div class="bg-slate-950 px-4 py-2.5 border-b border-slate-800 text-[11px] space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">Rastreabilidade da Demanda (Papéis Fixos):</span>
+        <span class="text-sky-400">De quem é a vez agora: <b id="drawerWhosTurn" class="text-white underline">Responsável</b></span>
+      </div>
+
+      <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 text-[10px]">
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">1. Atendimento:</span>
+          <b id="drawerRoleOwner" class="text-slate-200">—</b>
+        </div>
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">2. Roteiro/Copy:</span>
+          <b id="drawerRoleCopywriter" class="text-slate-200">—</b>
+        </div>
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">3. Captação:</span>
+          <b id="drawerRoleProducer" class="text-slate-200">—</b>
+        </div>
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">4. Edição/Arte:</span>
+          <b id="drawerRoleEditor" class="text-slate-200">—</b>
+        </div>
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">5. Tráfego/Post:</span>
+          <b id="drawerRolePublisher" class="text-slate-200">—</b>
+        </div>
+        <div class="bg-slate-900 p-1.5 rounded border border-slate-800">
+          <span class="text-slate-500 block">6. Aprovador:</span>
+          <b id="drawerRoleApprover" class="text-slate-200">—</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLE DE PONTUALIDADE & SLA (DATA META VS DATA REAL) -->
+    <div class="bg-slate-950/80 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-3">
+        <div>
+          <span class="text-slate-400 text-[10px] block">Data Meta (Prazo Planejado):</span>
+          <input type="date" id="drawerDataMetaInput" onchange="updateDrawerDateMeta(this.value)" class="bg-slate-900 border border-slate-800 rounded px-2 py-0.5 text-white font-semibold text-xs">
+        </div>
+        <div>
+          <span class="text-slate-400 text-[10px] block">Data Real Conclusão:</span>
+          <span id="drawerDataRealDisplay" class="font-mono text-slate-300 font-semibold">Em aberto</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span id="drawerSlaBadge" class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          ✓ Em Dia
+        </span>
+        <button onclick="markAsConcludedNow()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-400 px-2 py-1 rounded border border-slate-700 transition">
+          Dar Baixa (Concluir Agora)
+        </button>
+      </div>
+    </div>
+
+    <!-- Drawer Stage Selector -->
+    <div class="bg-slate-950 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs">
+      <div class="flex items-center gap-2">
+        <span class="text-slate-400 font-medium">Etapa do Pipeline:</span>
+        <select id="drawerStageSelect" onchange="handleDrawerStageChange(this.value)" class="bg-slate-800 border border-slate-700 text-white font-semibold rounded px-2.5 py-1 text-xs">
+          <!-- Populated dynamically with digital or offline labels -->
+        </select>
+      </div>
+      <span class="text-slate-400 text-[11px]">Dias nesta etapa: <b id="drawerDaysInStage" class="text-white">2 dias</b></span>
+    </div>
+
+    <!-- Drawer Sub-Tabs -->
+    <div class="flex border-b border-slate-800 bg-slate-900/60 px-4 text-xs font-medium overflow-x-auto no-scrollbar">
+      <button onclick="switchDrawerSubTab('editor')" id="dtab-editor" class="dtab-btn py-2.5 px-3 border-b-2 border-sky-500 text-sky-400 font-semibold whitespace-nowrap">
+        Roteiro & Conteúdo
+      </button>
+      <button onclick="switchDrawerSubTab('multichannel')" id="dtab-multichannel" class="dtab-btn py-2.5 px-3 border-b-2 border-transparent text-slate-400 hover:text-white flex items-center gap-1.5 whitespace-nowrap">
+        <span>Checklist Multicanal</span>
+        <span id="dtabMultichannelBadge" class="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">2/3</span>
+      </button>
+      <button onclick="switchDrawerSubTab('offline')" id="dtab-offline" class="dtab-btn py-2.5 px-3 border-b-2 border-transparent text-slate-400 hover:text-white hidden whitespace-nowrap">
+        Especificações Mídia Off
+      </button>
+      <button onclick="switchDrawerSubTab('adaptations')" id="dtab-adaptations" class="dtab-btn py-2.5 px-3 border-b-2 border-transparent text-slate-400 hover:text-white whitespace-nowrap">
+        Adaptações por Unidade (<span id="dtabAdaptationsCount">0</span>)
+      </button>
+      <button onclick="switchDrawerSubTab('approval')" id="dtab-approval" class="dtab-btn py-2.5 px-3 border-b-2 border-transparent text-slate-400 hover:text-white whitespace-nowrap">
+        Aprovações
+      </button>
+    </div>
+
+    <!-- Drawer Body -->
+    <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 text-xs">
+      
+      <!-- SUB-TAB 1: ROTEIRO ESTRUTURADO -->
+      <div id="dview-editor" class="space-y-6">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Título da Demanda</label>
+          <input type="text" id="drawerTitleInput" onchange="saveCurrentDrawerTitle(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white font-semibold focus:outline-none focus:border-sky-500">
+        </div>
+
+        <!-- Video Metadata Box -->
+        <div id="videoMetaBox" class="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-3">
+          <div class="flex items-center justify-between text-xs font-semibold text-sky-400 border-b border-slate-800/80 pb-2">
+            <span>Metadados de Produção de Vídeo</span>
+            <span id="drawerEstimatedDuration" class="text-slate-400 font-normal">Duração Estimada: ~45s</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+              <span class="text-slate-400 text-[11px] block">Tom de Voz da Marca:</span>
+              <p id="drawerVideoTone" class="text-slate-200 mt-0.5">Acolhedor, seguro e científico acessível.</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[11px] block">Sugestão de Áudio / Trilha:</span>
+              <p id="drawerVideoAudio" class="text-slate-200 mt-0.5">Lo-fi acústico suave em -22dB.</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[11px] block">Quem Grava / Especialista:</span>
+              <p id="drawerVideoSpeakers" class="text-slate-200 mt-0.5">Especialista Responsável</p>
+            </div>
+            <div>
+              <span class="text-slate-400 text-[11px] block">Local e Horário de Gravação:</span>
+              <p id="drawerVideoRecordingInfo" class="text-slate-200 mt-0.5">Unidade Matriz • Horário agendado</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cenas em Blocos (Reels) -->
+        <div id="scenesBuilderBox" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span>Blocos de Cena do Roteiro</span>
+              <span id="drawerScenesCountBadge" class="bg-slate-800 text-sky-400 px-1.5 py-0.5 rounded text-[10px]">4 Cenas</span>
+            </h3>
+            <button onclick="addSceneToCurrentDemand()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-400 font-medium px-2.5 py-1 rounded border border-slate-700 transition flex items-center gap-1">
+              + Adicionar Cena
+            </button>
+          </div>
+          <div class="space-y-2.5" id="scenesTableContainer"></div>
+        </div>
+
+        <!-- Lâminas do Carrossel -->
+        <div id="carouselBuilderBox" class="space-y-3 hidden">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <span>Construtor Lâmina a Lâmina (Carrossel)</span>
+              <span id="drawerSlidesCountBadge" class="bg-slate-800 text-indigo-400 px-1.5 py-0.5 rounded text-[10px]">3 Lâminas</span>
+            </h3>
+            <button onclick="addSlideToCurrentDemand()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-indigo-400 font-medium px-2.5 py-1 rounded border border-slate-700 transition flex items-center gap-1">
+              + Adicionar Lâmina
+            </button>
+          </div>
+          <div class="space-y-3" id="slidesTableContainer"></div>
+        </div>
+
+        <!-- Legenda & Hashtags -->
+        <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-white uppercase tracking-wider">Legenda do Post (Copy Final)</label>
+            <span class="text-[11px] text-slate-400">Herdado nas publicações</span>
+          </div>
+          <textarea id="drawerCaptionInput" onchange="saveCurrentDrawerCaption(this.value)" rows="3" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500"></textarea>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-400 block mb-1">Hashtags Estratégicas</label>
+            <input type="text" id="drawerHashtagsInput" onchange="saveCurrentDrawerHashtags(this.value)" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-sky-400 focus:outline-none focus:border-sky-500">
+          </div>
+        </div>
+
+        <!-- Links Drive -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Google Drive (Brutos / Gravação):</label>
+            <input type="text" id="drawerDriveRaw" onchange="saveCurrentDrawerDrive(this.value, 'raw')" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-sky-400">
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Google Drive (Editados / Finais):</label>
+            <input type="text" id="drawerDriveEdited" onchange="saveCurrentDrawerDrive(this.value, 'edited')" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-emerald-400">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SUB-TAB: CHECKLIST DE PUBLICAÇÃO MULTICANAL (1 Produção -> N Redes) -->
+      <div id="dview-multichannel" class="space-y-4 hidden">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-white uppercase tracking-wider">Publicação Multicanal (1 Produção &rarr; N Redes)</span>
+                <span id="multichannelStatusBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  Publicação Parcial (2/3)
+                </span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                A demanda só muda automaticamente para 100% Publicado quando TODAS as redes forem validadas. Enquanto faltar alguma, o badge de parcial fica visível para cobrança.
+              </p>
+            </div>
+            <button onclick="copyCurrentDemandCaption()" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 px-3 py-1.5 rounded-lg border border-slate-700 transition flex items-center gap-1.5 shrink-0 cursor-pointer">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              Copiar Legenda
+            </button>
+          </div>
+
+          <!-- Redes de Destino -->
+          <div class="space-y-1.5">
+            <span class="text-slate-400 text-[11px] font-semibold block">Redes Selecionadas para Distribuição:</span>
+            <div id="drawerTargetPlatformsToggles" class="flex flex-wrap gap-1.5">
+              <!-- Dynamically populated toggle pills -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist Table / Cards -->
+        <div class="space-y-2.5" id="multichannelChecklistContainer">
+          <!-- Dynamically populated checklist items -->
+        </div>
+      </div>
+
+      <!-- SUB-TAB 2: ESPECIFICAÇÕES MÍDIA OFF / FÍSICO -->
+      <div id="dview-offline" class="space-y-4 hidden">
+        <div class="bg-amber-950/20 border border-amber-800/40 rounded-xl p-4 space-y-3 text-xs">
+          <div class="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wider">
+            <span>🏢 Especificações de Mídia Off & Produção Gráfica</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="text-slate-400 block text-[11px] mb-1">Tipo de Peça Física:</label>
+              <input type="text" id="drawerOffPieceType" onchange="updateOfflineField('offlinePieceType', this.value)" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 block text-[11px] mb-1">Dimensões & Formato:</label>
+              <input type="text" id="drawerOffDimensions" onchange="updateOfflineField('offlineDimensions', this.value)" placeholder="ex: 3x2m, A4 com sangria 5mm" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 block text-[11px] mb-1">Cores / Especificações Técnicas:</label>
+              <input type="text" id="drawerOffColorSpecs" onchange="updateOfflineField('offlineColorSpecs', this.value)" placeholder="CMYK 300dpi / Pantone" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 block text-[11px] mb-1">Fornecedor / Gráfica Responsável:</label>
+              <input type="text" id="drawerOffSupplier" onchange="updateOfflineField('offlineSupplier', this.value)" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 block text-[11px] mb-1">Prazo de Envio para Gráfica:</label>
+              <input type="date" id="drawerOffDataEnvio" onchange="updateOfflineField('dataEnvioFornecedor', this.value)" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400 block text-[11px] mb-1">Observações de Instalação / Acabamento:</label>
+            <textarea id="drawerOffNotes" onchange="updateOfflineField('offlineNotes', this.value)" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUB-TAB 3: ADAPTAÇÕES POR UNIDADE -->
+      <div id="dview-adaptations" class="space-y-4 hidden">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-1">Checklists e Adaptações por CNPJ</h3>
+          <p class="text-xs text-slate-400">
+            A peça foi criada uma única vez. Abaixo você confere e customiza o CTA, telefone de triagem e endereço para cada uma das unidades selecionadas.
+          </p>
+        </div>
+        <div class="space-y-3" id="adaptationsListContainer"></div>
+      </div>
+
+      <!-- SUB-TAB 4: APROVAÇÕES -->
+      <div id="dview-approval" class="space-y-4 hidden">
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Histórico de Pareceres da Diretoria</h3>
+          <div class="space-y-3" id="drawerApprovalsHistory"></div>
+        </div>
+
+        <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="text-xs font-bold text-slate-300 uppercase">Emitir Parecer Nesta Demanda</h4>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="submitDrawerApproval('APPROVED')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded text-xs transition">
+              ✓ Aprovar
+            </button>
+            <button onclick="submitDrawerApproval('APPROVED_WITH_RESERVATIONS')" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 rounded text-xs transition">
+              ⚠️ Com Ressalvas
+            </button>
+            <button onclick="submitDrawerApproval('CORRECTION_REQUESTED')" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 rounded text-xs transition">
+              🛑 Pedir Ajustes
+            </button>
+          </div>
+          <div class="space-y-2 pt-1">
+            <input type="text" id="drawerApprovalSceneRef" placeholder="Referência exata (ex: Cena 2 ou Lâmina 4)" class="w-full bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+            <textarea id="drawerApprovalComment" rows="2" placeholder="Observações do parecer..." class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white"></textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
+      <button onclick="deleteCurrentDemand()" class="text-rose-400 hover:text-rose-300 font-medium">
+        Excluir Demanda
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button onclick="closeDrawer()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-medium transition">
+          Fechar
+        </button>
+        <button onclick="advanceStageCurrentDemand()" class="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded shadow-md shadow-sky-500/20 transition flex items-center gap-1">
+          Avançar Etapa &rarr;
+        </button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ========================================================== -->
+  <!-- MODAL: NOVO PEDIDO / LANÇAMENTO RÁPIDO NO INBOX             -->
+  <!-- ========================================================== -->
+  <div id="newDemandModalBackdrop" class="fixed inset-0 drawer-backdrop z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Lançamento Rápido de Pedido / Pauta
+        </h3>
+        <button onclick="closeNewDemandModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Título / Ideia da Demanda *</label>
+          <input type="text" id="newDemandTitle" placeholder="Ex: Campanha de Matrículas 2027 ou Novo Reels Institucional" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:border-sky-500">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Marca *</label>
+            <select id="newDemandBrand" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+              <!-- Injected dynamically -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Natureza da Demanda *</label>
+            <select id="newDemandNature" onchange="handleNewNatureChange(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white font-semibold">
+              <option value="DIGITAL">📱 Digital / Redes Sociais</option>
+              <option value="OFFLINE">🏢 Mídia Off / Material Físico</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Formato *</label>
+            <select id="newDemandFormat" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+              <option value="REELS">Vídeo / Reels / TikTok</option>
+              <option value="CAROUSEL">Carrossel (Lâminas)</option>
+              <option value="STATIC">Post Estático</option>
+              <option value="STORY">Sequência de Stories</option>
+              <option value="OFFLINE_PRINT">Material Físico / Impresso</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sky-400 font-bold mb-1">Data Meta Entrega (Prazo) *</label>
+            <input type="date" id="newDemandDateMeta" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-white font-semibold">
+          </div>
+        </div>
+
+        <!-- Redes de Destino (Multicanal) -->
+        <div id="newDemandNetworksBox" class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="block text-sky-400 font-bold text-[11px]">Redes de Destino (Multicanal)</label>
+            <span class="text-[10px] text-slate-400">1 Produção &rarr; N Publicações</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="INSTAGRAM" checked class="rounded text-pink-500">
+              <span class="text-white font-medium text-[11px]">📸 Instagram <b class="text-pink-400 text-[9px]">(Padrão)</b></span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="TIKTOK" class="rounded text-cyan-400">
+              <span class="text-white font-medium text-[11px]">🎵 TikTok</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="YOUTUBE" class="rounded text-rose-500">
+              <span class="text-white font-medium text-[11px]">🎬 YouTube</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="FACEBOOK" class="rounded text-blue-500">
+              <span class="text-white font-medium text-[11px]">👥 Facebook</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="GOOGLE" class="rounded text-emerald-500">
+              <span class="text-white font-medium text-[11px]">📍 Google Negócio</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="LINKEDIN" class="rounded text-sky-500">
+              <span class="text-white font-medium text-[11px]">💼 LinkedIn</span>
+            </label>
+            <label class="flex items-center gap-1.5 cursor-pointer bg-slate-900/90 p-1.5 rounded border border-slate-800 hover:border-slate-700">
+              <input type="checkbox" name="newNetworks" value="WHATSAPP" class="rounded text-emerald-400">
+              <span class="text-white font-medium text-[11px]">💬 WhatsApp</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Scope Selection -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1.5">
+          <label class="block text-sky-400 font-bold text-[11px]">Escopo Territorial</label>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+              <input type="radio" name="newScope" value="GLOBAL_BRAND" checked onchange="handleNewScopeRadio(this.value)">
+              <span><b>Global da Marca:</b> Replica em todas as unidades ativas</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+              <input type="radio" name="newScope" value="SINGLE_UNIT" onchange="handleNewScopeRadio(this.value)">
+              <span><b>Unidade Individual:</b> Exclusivo para 1 praça local</span>
+            </label>
+          </div>
+
+          <div id="newDemandUnitSelectBox" class="pt-2 hidden">
+            <select id="newDemandSingleUnit" class="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-white">
+              <!-- Injected -->
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Dono da Demanda (Atendimento)</label>
+            <select id="newDemandOwner" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+              <!-- Populated dynamically from state.team -->
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Prioridade</label>
+            <select id="newDemandPriority" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+              <option value="MEDIUM">Média</option>
+              <option value="HIGH">Alta</option>
+              <option value="URGENT">Urgente</option>
+              <option value="LOW">Baixa</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-slate-800 pt-3">
+        <button onclick="closeNewDemandModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-xs">Cancelar</button>
+        <button onclick="createDemandFromModal()" class="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-white font-semibold rounded text-xs shadow-md shadow-sky-500/20">Lançar no Sistema</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- MODAL: TRAVAMENTO (BLOCKER)                                -->
+  <!-- ========================================================== -->
+  <div id="blockerModalBackdrop" class="fixed inset-0 drawer-backdrop z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-rose-800/80 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center gap-2 text-rose-400 border-b border-rose-800/60 pb-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <h3 class="text-sm font-bold text-white">Sinalizar Travamento (Blocker)</h3>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Motivo do Travamento *</label>
+          <select id="blockerReasonSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+            <option value="Agenda de especialista/diretoria indisponível para gravação">Agenda de especialista/diretoria indisponível para gravação</option>
+            <option value="Aguardando aprovação de roteiro pela direção">Aguardando aprovação de roteiro pela direção</option>
+            <option value="Aguardando envio de material/fotos da unidade">Aguardando envio de material/fotos da unidade</option>
+            <option value="Atraso do fornecedor/gráfica na prova de cor">Atraso do fornecedor/gráfica na prova de cor</option>
+            <option value="Refação solicitada pela diretoria técnica">Refação solicitada pela diretoria técnica</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-medium mb-1">Quem precisa destravar? *</label>
+          <input type="text" id="blockerTargetInput" placeholder="Ex: Especialista Responsável ou Diretoria" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-white">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 border-t border-slate-800 pt-3">
+        <button onclick="closeBlockerModal()" class="px-3 py-1.5 bg-slate-800 text-slate-300 rounded text-xs">Cancelar</button>
+        <button onclick="confirmBlockDemand()" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded text-xs shadow-md shadow-rose-600/30">Confirmar Travamento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT ENGINE CORE (DEMO DATA BY DEFAULT + BYOD LOCAL WORKSPACE ENGINE) -->
+  <script src="/js/seed.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+// Prisma Schema for MarTech Hub - Multi-Brand Operations
+// Hierarchy: Holding -> Brands -> Units/Branches -> Social Channels
+// File: prisma/schema.prisma
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ScopeType {
+  GLOBAL_BRAND       // Todas as unidades ativas da marca
+  MULTI_UNIT         // Subconjunto de praças
+  SINGLE_UNIT        // Exclusivo de uma única unidade/CNPJ
+}
+
+enum OperationalRegime {
+  GESTAO_COMPLETA       // Gestão ativa integral de marketing e conteúdo
+  PRE_INAUGURACAO       // Unidade em montagem/expansão (campanhas de aquecimento)
+  CESSAO_SEM_CONTEUDO   // Cessão de marca/locação (registrada na holding, sem metas de postagem)
+}
+
+enum DemandNature {
+  DIGITAL    // Redes Sociais, YouTube, Google, WhatsApp
+  OFFLINE    // Mídia Off, Fachada, Tapume, Outdoor, Impresso, Brinde, Estande
+}
+
+enum PlatformType {
+  INSTAGRAM
+  TIKTOK
+  FACEBOOK
+  YOUTUBE
+  LINKEDIN
+  GOOGLE_BUSINESS
+  WHATSAPP
+  MIDIA_OFF
+}
+
+enum ContentFormat {
+  REELS
+  CAROUSEL
+  STATIC
+  STORY
+  YOUTUBE_VIDEO
+  ARTICLE
+  OFFLINE_PRINT
+}
+
+enum PipelineStage {
+  IDEA                 // 1. Ideia / Triagem (Inbox)
+  SCRIPTING            // 2. Roteiro & Copy
+  SCRIPT_APPROVAL      // 3. Aprovação de Roteiro
+  RECORDING            // 4. Captação / Gravação
+  PRODUCTION           // 5. Edição de Vídeo / Design
+  QA_REVIEW            // 6. Revisão Interna
+  FINAL_APPROVAL       // 7. Aprovação Final da Peça
+  ADJUSTMENT           // 8. Ajustes / Correções
+  SCHEDULED_OR_PRINT   // 9. Agendado (Digital) OU Enviado Gráfica/Fornecedor (Off)
+  PUBLISHED_OR_DELIVERED // 10. Publicado (Digital) OU Entregue/Instalado (Off)
+}
+
+enum TeamRole {
+  ACCOMPANIMENT_LEAD    // Atendimento / Dono da Demanda
+  COPYWRITER_STRATEGIST // Roteirista / Copywriter
+  VIDEOMAKER_PRODUCER   // Videomaker / Captação
+  VIDEO_EDITOR          // Editor de Vídeo
+  DESIGNER              // Designer Gráfico
+  PUBLISHER_TRAFFIC     // Publicador / Tráfego
+  APPROVER              // Diretor / Gestor Aprovador
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SlaStatus {
+  ON_TIME             // Dentro do prazo previsto
+  OVERDUE_OPEN        // Atrasado e ainda não concluído
+  COMPLETED_ON_TIME   // Concluído no prazo (data_real <= data_meta)
+  COMPLETED_LATE      // Concluído com atraso (data_real > data_meta)
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  APPROVED_WITH_RESERVATIONS
+  CORRECTION_REQUESTED
+}
+
+// 1. HOLDING / GRUPO EMPRESARIAL
+model Holding {
+  id          String   @id @default(cuid())
+  name        String   @default("Grupo Vértice (Demo)")
+  slug        String   @unique @default("grupo-vertice-demo")
+  description String?  @default("Holding Multissetorial: Saúde, Educação, Tecnologia, Gastronomia e Franquias")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brands      Brand[]
+}
+
+// 2. MARCAS DO GRUPO
+model Brand {
+  id                   String   @id @default(cuid())
+  holdingId            String
+  holding              Holding  @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+  name                 String   // ex: Clínica Horizonte, Vértice ERP, Colégio Atlas
+  slug                 String   @unique
+  code                 String   @unique // ex: CHOR, VERP, CATL
+  segment              String   // ex: Saúde, Educação, Tecnologia
+  colorPrimary         String   @default("#0EA5E9")
+  colorSecondary       String   @default("#0F172A")
+  logoUrl              String?
+  brandVoiceGuidelines String?
+  pillarsJson          String   @default("[]")
+  monthlyTargetPosts   Int      @default(20)
+  isMultiUnit          Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  units                Unit[]
+  channels             Channel[]
+  demands              Demand[]
+  editorialGrids       EditorialGridRule[]
+}
+
+// 3. UNIDADES / CNPJS (Com Regime Operacional)
+model Unit {
+  id                 String             @id @default(cuid())
+  brandId            String
+  brand              Brand              @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  name               String             // ex: Unidade Jardins, Unidade Centro
+  slug               String             @unique
+  razaoSocial        String?
+  cnpj               String?
+  city               String             // ex: São Paulo, Curitiba, Recife
+  uf                 String             // SP, PR, PE
+  address            String?
+  localManagerName   String?
+  localManagerEmail  String?
+  regime             OperationalRegime  @default(GESTAO_COMPLETA)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  channels           Channel[]
+  adaptations        DemandAdaptation[]
+  editorialGrids     EditorialGridRule[]
+}
+
+// 4. CANAIS / PERFIS SOCIAIS
+model Channel {
+  id            String       @id @default(cuid())
+  brandId       String
+  brand         Brand        @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  unitId        String?      // NULL = Canal Institucional Global; Preenchido = Canal local
+  unit          Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  platform      PlatformType
+  handle        String       // ex: @clinicahorizonte, @verticeerp
+  name          String
+  url           String?
+  followerCount Int          @default(0)
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  adaptations   DemandAdaptation[]
+}
+
+// 5. EQUIPE E PAPÉIS FIXOS
+model TeamMember {
+  id               String      @id @default(cuid())
+  name             String
+  email            String      @unique
+  role             TeamRole
+  roleDescription  String?     // Atendimento, Roteirista, Videomaker, Editor, Tráfego, Aprovador
+  avatarUrl        String?
+  maxActiveDemands Int         @default(12)
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  // Múltiplos vínculos por papel na demanda
+  demandsAsOwner      Demand[] @relation("DemandOwner")
+  demandsAsCopywriter Demand[] @relation("DemandCopywriter")
+  demandsAsProducer   Demand[] @relation("DemandProducer")
+  demandsAsEditor     Demand[] @relation("DemandEditor")
+  demandsAsPublisher  Demand[] @relation("DemandPublisher")
+  demandsAsApprover   Demand[] @relation("DemandApprover")
+  demandsAsAssignee   Demand[] @relation("DemandCurrentAssignee")
+  approvalsSubmitted  DemandApproval[]
+}
+
+// 6. GRADE EDITORIAL SEMANAL
+model EditorialGridRule {
+  id                String        @id @default(cuid())
+  brandId           String
+  brand             Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  unitId            String?
+  unit              Unit?         @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  dayOfWeek         Int           // 1=Segunda ... 7=Domingo
+  format            ContentFormat
+  pillar            String
+  weeklyTargetCount Int           @default(1)
+}
+
+// 7. FERIADOS REGIONAIS DAS PRAÇAS
+model Holiday {
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime
+  city        String?  // Cidade da unidade
+  uf          String?  // UF
+  isNational  Boolean  @default(false)
+}
+
+// 8. MOTOR DE DEMANDAS (INBOX, PIPELINE, MÍDIA OFF, SLA RIGOROSO)
+model Demand {
+  id                 String        @id @default(cuid())
+  code               String        @unique // ex: CHOR-2026-001
+  brandId            String
+  brand              Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  scope              ScopeType     @default(GLOBAL_BRAND)
+  targetUnitsJson    String        @default("[]") // IDs de unidades selecionadas
+  naturezaDemanda    DemandNature  @default(DIGITAL) // DIGITAL vs OFFLINE
+
+  title              String
+  description        String?
+  format             ContentFormat
+  stage              PipelineStage @default(IDEA)
+  priority           PriorityLevel @default(MEDIUM)
+  campaignName       String?
+
+  // --- MÚLTIPLOS RESPONSÁVEIS OBRIGATÓRIOS ---
+  ownerId            String?       // Responsável pelo Acompanhamento / Atendimento (Dono da Demanda)
+  owner              TeamMember?   @relation("DemandOwner", fields: [ownerId], references: [id])
+  copywriterId       String?       // Responsável por Roteiro / Copy
+  copywriter         TeamMember?   @relation("DemandCopywriter", fields: [copywriterId], references: [id])
+  producerId         String?       // Responsável por Gravação / Captação
+  producer           TeamMember?   @relation("DemandProducer", fields: [producerId], references: [id])
+  editorId           String?       // Responsável por Edição / Design
+  editor             TeamMember?   @relation("DemandEditor", fields: [editorId], references: [id])
+  publisherId        String?       // Responsável por Publicação / Tráfego
+  publisher          TeamMember?   @relation("DemandPublisher", fields: [publisherId], references: [id])
+  approverId         String?       // Aprovador da Demanda
+  approver           TeamMember?   @relation("DemandApprover", fields: [approverId], references: [id])
+
+  // De quem é a vez na etapa atual
+  currentAssigneeId  String?
+  currentAssignee    TeamMember?   @relation("DemandCurrentAssignee", fields: [currentAssigneeId], references: [id])
+
+  // --- CONTROLE DE PONTUALIDADE E SLA (NUNCA SOBRESCREVER A DATA META) ---
+  dataMetaEntrega    DateTime?     // Prazo acordado no planejamento (para ir ao ar ou entrega física)
+  dataRealConclusao  DateTime?     // Timestamp real de quando foi publicado ou entregue
+  slaStatus          SlaStatus     @default(ON_TIME)
+  delayDaysCount     Int           @default(0)     // Dias de atraso caso data_real > data_meta
+  delayReason        String?       // "Atraso na aprovação", "Atraso na edição", "Atraso da gráfica", etc.
+  stageWhereDelayed  PipelineStage?// Em qual etapa do funil o atraso ocorreu
+
+  // Rastreador de tempo
+  daysInStage        Int           @default(0)
+  stageEnteredAt     DateTime      @default(now())
+  reworkCount        Int           @default(0)
+
+  // Flag de Travamento (Blocker)
+  isBlocked          Boolean       @default(false)
+  blockedReason      String?
+  blockedTarget      String?       // Quem precisa destravar
+  blockedAt          DateTime?
+
+  // Metadados Digitais (Copy e Publicação)
+  caption            String?
+  hashtags           String?
+  driveRawUrl        String?
+  driveEditedUrl     String?
+
+  // Metadados Vídeo / Reels / Gravação
+  videoDurationSec   Int?          @default(45)
+  videoToneOfVoice   String?
+  videoAudioTrack    String?
+  videoLightingTips  String?
+  videoSpeakers      String?       // Quem grava
+  recordingDate      DateTime?
+  recordingLocation  String?       // Unidade/Cenário
+  recordingTime      String?       // "14:00"
+
+  // Metadados Específicos de Mídia Off / Material Físico
+  offlinePieceType   String?       // Fachada, Tapume, Outdoor, Banner, Camiseta, Crachá, Impresso
+  offlineDimensions  String?       // ex: 3x2m, A4, CMYK com sangria de 5mm
+  offlineColorSpecs  String?       // CMYK / Pantone
+  offlineSupplier    String?       // Fornecedor / Gráfica responsável
+  dataEnvioFornecedor DateTime?    // Prazo de envio dos arquivos fechados para a gráfica
+  offlineNotes       String?
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  scenes             DemandScene[]
+  slides             DemandSlide[]
+  adaptations        DemandAdaptation[]
+  approvals          DemandApproval[]
+}
+
+// 9. CONSTRUTOR DE CENAS EM BLOCOS (Vídeo / Reels / Shorts / TikTok)
+model DemandScene {
+  id             String    @id @default(cuid())
+  demandId       String
+  demand         Demand    @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  sceneNumber    Int
+  timeRange      String    // ex: "00:00 - 00:06"
+  stageHook      String    // Gancho, Problema, Solução, Desenvolvimento, CTA
+  visualAction   String    // Ação de câmera, enquadramento
+  voiceoverText  String    // Fala / Locução exata
+  letteringText  String?   // Texto na tela
+  orderIndex     Int       @default(0)
+}
+
+// 10. CONSTRUTOR LÂMINA A LÂMINA (Carrosséis)
+model DemandSlide {
+  id              String   @id @default(cuid())
+  demandId        String
+  demand          Demand   @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  slideNumber     Int
+  title           String   // Título na arte
+  bodyText        String   // Texto da lâmina
+  footerCta       String?  // Rodapé
+  visualDirection String?  // Referência visual / upload link
+  orderIndex      Int      @default(0)
+}
+
+// 11. CHECKLIST E ADAPTAÇÕES LOCAIS POR UNIDADE / CNPJ
+model DemandAdaptation {
+  id            String    @id @default(cuid())
+  demandId      String
+  demand        Demand    @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  unitId        String
+  unit          Unit      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  channelId     String?
+  channel       Channel?  @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  localCta      String?
+  localAddress  String?
+  localContact  String?
+  isScheduled   Boolean   @default(false)
+  isPublished   Boolean   @default(false)
+  publishedAt   DateTime?
+}
+
+// 12. CENTRAL DE APROVAÇÃO
+model DemandApproval {
+  id              String         @id @default(cuid())
+  demandId        String
+  demand          Demand         @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  approverId      String?
+  approver        TeamMember?    @relation(fields: [approverId], references: [id], onDelete: SetNull)
+  approverName    String
+  approverRole    String
+  status          ApprovalStatus
+  sceneOrSlideRef String?        // ex: "Cena 2" ou "Lâmina 4"
+  comment         String?
+  createdAt       DateTime       @default(now())
+}

@@ -1,0 +1,20 @@
+{
+  "name": "martech-hub",
+  "version": "1.0.0",
+  "description": "Multi-Brand MarTech Operations OS — Content Pipeline, Structured Scripting, Offline Media & SLA Tracking Engine (BYOD Client-Side Architecture)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "martech",
+    "marketing-operations",
+    "multibrand",
+    "content-pipeline",
+    "sla-tracking",
+    "kanban",
+    "byod"
+  ],
+  "license": "MIT"
+}
